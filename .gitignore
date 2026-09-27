@@ -1,0 +1,5 @@
+node_modules/
+*.log
+.claude/
+AGENTS.md
+CLAUDE.md

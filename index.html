@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ef">
+  <title>Trust Ledger — agent identity demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">T<span>·</span></span><div><strong>TRUST LEDGER</strong><small>Sam AI Lab · synthetic challenge demo</small></div></div>
+      <div class="top-right"><span class="live-dot"></span> LOCAL SIGNATURES <span class="top-rule"></span> NO REAL AGENTS</div>
+    </header>
+
+    <main class="layout">
+      <aside class="scenario-rail">
+        <div class="rail-label">01 / SELECT AN INTERACTION</div>
+        <h1>Who gets<br>to act?</h1>
+        <p class="rail-copy">A counterparty requests a task. Verify who they are, what they can do, and whether the proof still holds.</p>
+        <nav class="scenario-list" aria-label="Trust scenarios">
+          <button class="scenario active" data-scenario="baseline"><span>01</span><strong>Verified handoff</strong><small>Valid identity + scope</small><b>↗</b></button>
+          <button class="scenario" data-scenario="spoof"><span>02</span><strong>Copied credential</strong><small>Wrong agent key</small><b>↗</b></button>
+          <button class="scenario" data-scenario="revoked"><span>03</span><strong>Revoked access</strong><small>Valid signature, dead grant</small><b>↗</b></button>
+          <button class="scenario" data-scenario="scope"><span>04</span><strong>Scope escalation</strong><small>Asks for payment authority</small><b>↗</b></button>
+          <button class="scenario" data-scenario="tamper"><span>05</span><strong>Edited proof</strong><small>Signature no longer matches</small><b>↗</b></button>
+        </nav>
+        <div class="rail-footer">P-256 ECDSA / SHA-256<br>Keys generated for this browser session</div>
+      </aside>
+
+      <section class="workspace" aria-label="Trust decision workspace">
+        <div class="workspace-head"><div><div class="eyebrow">02 / REQUEST</div><h2 id="scenario-title">Warehouse asks Courier-7 for inventory</h2></div><span id="case-id">CASE / TL-001</span></div>
+        <p id="scenario-description" class="description">A warehouse agent will accept an inventory lookup only if Courier-7 presents a signed, current, scoped capability and independent history.</p>
+        <div class="request-strip"><div><span>COUNTERPARTY</span><strong id="agent-name">agent:courier-7</strong></div><div><span>REQUESTED SCOPE</span><strong id="request-scope">inventory:read</strong></div><div><span>VERIFIER</span><strong>agent:warehouse</strong></div></div>
+
+        <div class="identity-heading"><div><div class="eyebrow">03 / TRUST PROFILE</div><h3>Proof, not a score.</h3></div><button id="evaluate" type="button">Verify task <span>↗</span></button></div>
+        <div class="identity-line"><div><span>AGENT KEY FINGERPRINT</span><strong id="fingerprint">Generating keys…</strong></div><div><span>ISSUERS PINNED BY VERIFIER</span><strong>Northstar Ops · Harbor Partner</strong></div></div>
+        <div class="proof-list" id="proof-list" aria-label="Presented credentials"></div>
+
+        <div class="decision-band" id="decision-band" aria-live="polite"><div><span>04 / VERIFIER DECISION</span><strong id="decision">Generating identities…</strong><p id="decision-detail">Cryptographic identities are generated locally.</p></div><div class="decision-code" id="decision-code">PENDING</div></div>
+      </section>
+
+      <aside class="trace-rail" aria-label="Verification trace">
+        <div class="eyebrow">05 / VERIFICATION TRACE</div>
+        <h3>Every gate<br>is visible.</h3>
+        <p class="trace-intro">A signed claim is evidence from a pinned issuer. It is not permission to exceed its scope.</p>
+        <ol id="trace-list" class="trace-list"><li>Waiting for verification.</li></ol>
+        <div class="trace-footer"><span>MODEL BOUNDARY</span><p>Demo keys and claims are synthetic. No real agent or production system is authorized by this page.</p></div>
+      </aside>
+    </main>
+    <footer>TRUST LEDGER / 2026 <span>DOO · THE AGENT THAT EARNS TRUST</span> <span>NO SERVER · NO EXTERNAL ACTIONS</span></footer>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
