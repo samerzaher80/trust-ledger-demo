@@ -55,3 +55,5 @@ Agent identity will move from a static name and reputation score to **portable, 
 ## Scope and provenance
 
 Built as a fresh public challenge demo by Sameer S. Najm / Sam AI Lab with Codex assistance. All data and agent identities are synthetic. No private repositories, client data, or proprietary model weights are included.
+
+Select **Replayed proof** to see the same signed response accepted once and refused with `CHALLENGE_REPLAY`. The verifier issues, tracks, and consumes its own challenges in memory. A production verifier would need shared atomic consumption across replicas.

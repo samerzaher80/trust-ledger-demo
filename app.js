@@ -1,4 +1,4 @@
-import { assessTask, createChallenge, createSyntheticNetwork, signChallenge } from './trust.js';
+import { createVerifier, createSyntheticNetwork, signChallenge } from './trust.js';
 
 const $ = id => document.getElementById(id);
 const scenarios = {
@@ -6,9 +6,11 @@ const scenarios = {
   spoof: { title: 'An impostor copies Courier-7’s claims', description: 'The same credential bundle is presented from a different public key. The subject binding must stop impersonation.', scope: 'inventory:read', caseId: 'TL-002' },
   revoked: { title: 'The organization revokes access', description: 'The signature is still valid, but the grant ID appears in the verifier’s local revocation list.', scope: 'inventory:read', caseId: 'TL-003' },
   scope: { title: 'Courier-7 asks to send a payment', description: 'The signed grant permits inventory reading. A stronger action cannot be inferred from good reputation.', scope: 'payment:send', caseId: 'TL-004' },
+  replay: { title: 'A captured proof is replayed', description: 'The same signed response is sent twice to the warehouse verifier.', scope: 'inventory:read', caseId: 'TL-006' },
   tamper: { title: 'A proof is edited after signing', description: 'An attacker adds payment authority to the capability payload without obtaining a fresh issuer signature.', scope: 'payment:send', caseId: 'TL-005' }
 };
 const claimLabels = { capability: ['SIGNED CAPABILITY', 'Northstar Operations', 'inventory:read · warehouse audience'], 'action-receipt': ['SIGNED ACTION RECEIPT', 'Northstar Operations', 'prior fulfilled inventory lookup'], vouch: ['INDEPENDENT VOUCH', 'Harbor Partner', 'joint handoff attested'] };
+const verifier = createVerifier();
 let network;
 let selected = 'baseline';
 
@@ -42,14 +44,19 @@ async function run() {
   if (selected === 'tamper') claims[0].payload.scopes.push('payment:send');
   const presenter = selected === 'spoof' ? network.impostor : network.agent;
   const now = Date.now();
-  const challenge = createChallenge('agent:warehouse', caseData.scope, now);
+  const challenge = verifier.issue('agent:warehouse', caseData.scope, now);
   const proofSignature = await signChallenge(presenter, challenge);
-  const result = await assessTask({
+  const input = {
     agentId: 'agent:courier-7', agentPublicKey: presenter.publicKey,
     requestScope: caseData.scope, audience: 'agent:warehouse', claims,
     anchors: { organization: network.organization.publicKey, peer: network.peer.publicKey },
     revokedIds: selected === 'revoked' ? ['cap-104'] : [], now, challenge, proofSignature
-  });
+  };
+  const first = await verifier.assess(input);
+  const result = selected === 'replay' && first.decision === 'ACCEPT'
+    ? await verifier.assess(input)
+    : first;
+  if (selected === 'replay') result.checks.unshift(`First presentation: ${first.decision}`);
   $('decision-band').classList.toggle('accepted', result.decision === 'ACCEPT');
   $('decision-band').classList.toggle('refused', result.decision === 'REFUSE');
   $('decision').textContent = result.decision;

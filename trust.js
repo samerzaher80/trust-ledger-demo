@@ -70,13 +70,37 @@ export async function verifyClaim(claim, pinnedIssuerKey) {
 
 function result(decision, code, detail, checks) { return { decision, code, detail, checks }; }
 
-export async function assessTask(input) {
+const challengeWindowMs = 60_000;
+
+export function createVerifier() {
+  const challenges = new Map();
+  return {
+    issue(audience, scope, now = Date.now()) {
+      for (const [nonce, entry] of challenges) {
+        if (entry.challenge.issuedAt + challengeWindowMs < now) challenges.delete(nonce);
+      }
+      const challenge = createChallenge(audience, scope, now);
+      challenges.set(challenge.nonce, { challenge: { ...challenge }, used: false });
+      return challenge;
+    },
+    assess: input => assessTask(input, challenges)
+  };
+}
+
+async function assessTask(input, challenges) {
   const { agentId, agentPublicKey, requestScope, audience, claims, anchors, revokedIds = [], now, challenge, proofSignature } = input;
   const checks = [];
-  if (!challenge || challenge.audience !== audience || challenge.requestScope !== requestScope || !Number.isFinite(challenge.issuedAt) || Math.abs(now - challenge.issuedAt) > 60_000 || !await verifyPossession(agentPublicKey, challenge, proofSignature)) {
+  const issued = challenges.get(challenge?.nonce);
+  if (!issued || canonical(issued.challenge) !== canonical(challenge) ||
+      challenge.audience !== audience || challenge.requestScope !== requestScope ||
+      !Number.isFinite(now) || now < challenge.issuedAt || now - challenge.issuedAt > challengeWindowMs ||
+      !await verifyPossession(agentPublicKey, challenge, proofSignature)) {
     return result('REFUSE', 'CHALLENGE_INVALID', 'The presenter did not prove possession of this key for the current task challenge.', checks);
   }
-  checks.push('Fresh task challenge: private key possession verified');
+  // Claim before the next await so concurrent presentations cannot both succeed.
+  if (issued.used) return result('REFUSE', 'CHALLENGE_REPLAY', 'This signed challenge was already used.', checks);
+  issued.used = true;
+  checks.push('Fresh, single-use task challenge: private key possession verified');
   const subjectKey = await fingerprint(agentPublicKey);
   const byType = type => claims.find(claim => claim?.payload?.type === type);
   const capability = byType('capability');
